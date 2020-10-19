@@ -8,8 +8,11 @@ import (
 	"github.com/shkh/lastfm-go/lastfm"
 	"log"
 	"os"
+	"io"
 	"sync"
 	"time"
+	"unicode"
+	"strings"
 )
 
 const (
@@ -80,8 +83,61 @@ func main() {
 	run(dsession, lfm)
 }
 
+func redactVowels(s string) string{
+	vowels := []byte{'a','e','i','o','u'}
+	var res strings.Builder
+
+	first := true
+	for i := range s{
+		found := false
+		if first{
+			for _,v := range vowels{
+				if s[i]==v {
+					res.WriteString("*")
+					found=true
+					first=false
+					break
+				}
+			}
+		}
+		if !found{
+			res.WriteByte(s[i])
+		}
+	}
+	return res.String()
+}
+
+func censure(s string) string{
+    for i := 0; i < len(s); i++ {
+        if s[i] > unicode.MaxASCII {
+            return s
+        }
+    }
+	fi, err := os.Open("filter.py")
+	if err != nil{
+		panic(err)
+	}
+	buf := make([]byte,1024)
+	for {
+		n,err:=fi.Read(buf)
+		if err != nil && err!=io.EOF {
+			panic(err)
+		}
+		if n==0 {
+			break
+		}
+		swear := string(buf)
+		for strings.Contains(strings.ToLower(s),swear) {
+			idx := strings.Index(strings.ToLower(s),swear)
+			s = s[:idx] + redactVowels(s[idx:idx+len(swear)]) + s[idx+len(swear):]
+		}
+	}
+	fi.Close()
+    return s
+}
+
 func run(s *discordgo.Session, lfm *lastfm.Api) {
-	// Run continously untill somethign catches fire or an std
+	// Run continously untill something catches fire or an std
 	ticker := time.NewTicker(time.Second * 10)
 
 	lastPlaying := ""
@@ -130,22 +186,17 @@ func check(lfm *lastfm.Api) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	if len(recent.Tracks) < 1 {
 		return "", errors.New("No tracks")
 	}
-
 	track := recent.Tracks[0]
-
-	return "♩" + track.Name + " by " + track.Artist.Name + "♩", nil
+	return censure(track.Name) + " by " + censure(track.Artist.Name), nil
 }
 
 func fatal(args ...interface{}) {
 	log.Println(args...)
 	log.Print("Press enter to quit...")
-
 	var input rune
 	fmt.Scanf("%c", &input)
-
 	os.Exit(1)
 }
