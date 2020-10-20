@@ -123,7 +123,6 @@ func censure(s string) string{
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan(){
 		swear := scanner.Text()
-		fmt.Println(swear)
 		strings.ReplaceAll(swear,"\n","")
 		for strings.Contains(strings.ToLower(s),swear) {
 			idx := strings.Index(strings.ToLower(s),swear)
