@@ -3,12 +3,12 @@ package main
 import (
 	"errors"
 	"flag"
+	"bufio"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/shkh/lastfm-go/lastfm"
 	"log"
 	"os"
-	"io"
 	"sync"
 	"time"
 	"unicode"
@@ -92,7 +92,7 @@ func redactVowels(s string) string{
 		found := false
 		if first{
 			for _,v := range vowels{
-				if unicode.ToLower(s[i])==v {
+				if byte(unicode.ToLower(rune(s[i])))==v {
 					res.WriteString("*")
 					found=true
 					first=false
