@@ -157,7 +157,7 @@ func run(s *discordgo.Session, lfm *lastfm.Api) {
 
 			if !setFallback && time.Since(lastPlayingTime).Seconds() > float64(flagNoSongDuration) {
 
-				err = s.UpdateGameStatus(0, flagNoSong)
+				err = s.UpdateListeningStatus(flagNoSong)
 				if err != nil {
 					log.Println("Error updating status:", err)
 				} else {
@@ -168,7 +168,7 @@ func run(s *discordgo.Session, lfm *lastfm.Api) {
 			}
 		} else {
 
-			err = s.UpdateGameStatus(0, playing)
+			err = s.UpdateListeningStatus(playing)
 			if err != nil {
 				log.Println("Error updating status:", err)
 			} else {
